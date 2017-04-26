@@ -1,290 +1,208 @@
 #include<stdio.h>
 #include<string.h>
-#include<ctype.h>
-typedef struct machine_opcode_table
+#include<stdlib.h>
+struct mot
 {
-char pnemonic[10];
-int length;
-}mot;
-typedef struct symbol_table
+	int len;
+	char inst[10];
+}m[3];
+
+struct pot
 {
-char name[10],ra;
-int lcval;
-}st;
-typedef struct base_table
+	char dir[20];
+}p[3];
+
+struct st
 {
-int br;
-int bv;
-}bt;
+	char name[20];
+	int val;
+	int length;
+	char reloc[1];
+}s[10];
+
+struct bt
+{
+	char reg[10];
+	int content;
+}b[20];
+struct Pass
+	{
+	char c[10];
+	int n;
+	int offset;
+	int index;
+	int base;
+	}pass[10];
+
 void main()
 {
-	int lc=0,i,j,num,n=0,ind=0,p=0,loc[20],dflag,symval,min,diff,content,temp,offset,k,flag,q,ch1,ch2,va1,va2;
-	char label[10],opcode[10],operand1[10],operand2[30],ch;
-	char dir[9][9] = {"START","END","ORIGINAL","EQU","LTORG","USING","BALR","DS","DC"};
-	char pot[8][6]={"DROP","END","START","USING","BALR","EQU","DS","DC"};
-	char imperative[6][4]={"L","A","ST","SR","BCT","BR"};
-	char declarative[2][3] = {"DC","DS"};
-	mot m[15];
-	st s[10];
-	bt b[5];
-	strcpy(m[0].pnemonic,"L")  ; m[0].length=4;
-	strcpy(m[1].pnemonic,"A")  ; m[1].length=4;
-	strcpy(m[2].pnemonic,"ST") ; m[2].length=4;
-	strcpy(m[3].pnemonic,"SR") ; m[3].length=2;
-	strcpy(m[4].pnemonic,"BR") ; m[4].length=4;
-	strcpy(m[5].pnemonic,"BCT"); m[5].length=4;
-	strcpy(m[6].pnemonic,"LR") ; m[6].length=2;
-	strcpy(m[7].pnemonic,"LH") ; m[7].length=4;
-	strcpy(m[8].pnemonic,"BNE"); m[8].length=4;
-	strcpy(m[9].pnemonic,"C")  ; m[9].length=4;
-	strcpy(m[10].pnemonic,"AR")  ; m[10].length=2;
-	FILE *f1;
-	loc[p]=lc; 
-	f1=fopen("input.txt","r"); 
-	fscanf(f1,"%s%s%s%s",label,opcode,operand1,operand2);
-	while(!(feof(f1)))
+	char s1[10],s2[10],s3[10],s4[10];
+	int lc=0,l=0;
+	int i,j=0,k=0;
+int offset,index,base;
+	strcpy(m[0].inst,"L");
+	strcpy(m[1].inst,"A");
+	strcpy(m[2].inst,"ST");                       
+
+	m[0].len=4;
+	m[1].len=4;
+	m[2].len=4;
+
+	strcpy(p[0].dir,"START");
+	strcpy(p[1].dir,"END");
+	strcpy(p[2].dir,"USING");
+	strcpy(p[3].dir,"DC");
+	strcpy(p[4].dir,"DS");
+
+	printf("\nMOT \n\tMnemonics \tlength");
+	for(i=0;i<3;i++)
 	{
-	printf("\n%s\t%s\t%s\t%s\t\t%d\n",label,opcode,operand1,operand2,loc[p]);
-	p++;
-	dflag=0;
-	for(i=0;i<8;i++)
+		printf("\n\t%s\t\t%d",m[i].inst,m[i].len);
+	}
+	printf("\nPOT \n\tDirectives\n");
+	for(i=0;i<4;i++)
 	{
-	if(strcmp(pot[i],opcode)==0)
+		printf("\t%s",p[i].dir);
+		printf("\n");
+	}
+	FILE *fp;
+	fp=fopen("Assembler.txt","r");
+
+	while(!feof(fp))
 	{
-		for(i=0;i<2;i++)
-		{
-			if(strcmp(declarative[i],opcode)==0)
+		fscanf(fp,"%s %s %s %s",s1,s2,s3,s4);
+		if(strcmp(s1,"*")!=0)
+		{	
+			strcpy(s[j].name,s1);
+			s[j].val=lc;
+			if((strcmp(s3,"F0")==0) || (strcmp(s4,"F")==0))
 			{
-				dflag=1;
-				strcpy(s[n].name,label); 
-				s[n].lcval = lc;
-				s[n].ra='R';
-				n++;
-			if(strcmp(operand1,"F")==0)
-			{
-				lc = lc+4; 
+				s[j].length=4;
+				strcpy(s[j].reloc,"R");
 			}
-			else if(strcmp(operand1,"H")==0)
+			else if((strcmp(s3,"H0")==0) || (strcmp(s4,"H")==0))
 			{
-				lc = lc+2; 
+				s[j].length=2;
+				strcpy(s[j].reloc,"R");
 			}
 			else
 			{
-			num = atoi(operand1); 
-			if(strcmp(operand2,"F")==0)
-			{
-				lc = lc+(4*num); 
+				s[j].length=1;
+				strcpy(s[j].reloc,"R");
 			}
-			else if(strcmp(operand2,"H")==0)
-			{
-				lc = lc+(2*num);
-			}
-			} 
-			
-			break;
-			}
+			j++;
 		}
-		if(strcmp(opcode,"EQU")==0)
-			{
-				strcpy(s[n].name,label);
-				s[n].lcval = atoi(operand1);
-				s[n].ra='A';
-				n++;
-			}
-		else if(strcmp(opcode,"START")==0)
-			{
-				lc= atoi(operand1);
-			}
-		else if(strcmp(opcode,"USING")==0)
-			{
-				b[ind].br = atoi(operand2);
-				if(strcmp(operand1,"*")==0)
-				{
-					b[ind].bv = lc;
-				}
-				else
-				{
-					b[ind].bv = atoi(operand1);
-				}
-			ind++;
-			}
-			
-		else
-		{
-		if((strcmp(label,"?")==0) || (strcmp(opcode,"START")==0) || dflag==1)
-				break;
-			else
-			{
-				strcpy(s[n].name,label); 
-				s[n].lcval = lc;
-				s[n].ra='R';
-				n++;
-			}
-		}
-	break;
-	}
-	}//for
-	for(i=0;i<6;i++)
+		
+	for(i=0;i<4;i++)
 	{
-		if(strcmp(m[i].pnemonic,opcode)==0)
+		if(strcmp(p[i].dir,s2)==0)
 		{
-		if(strcmp(label,"?")==0) 
-			{;}
-		else
+			if(strcmp(s2,"USING")==0)
+			{
+				strcpy(b[k].reg,s4);
+				b[k].content=lc;
+				k++;
+			}
+		}
+		else if(strcmp(m[i].inst,s2)==0)
 		{
-			strcpy(s[n].name,label); 
-			s[n].lcval = lc;
-			n++;
-		}
-		lc = lc+m[i].length;
+			lc=lc+m[i].len;
 		}
 	}
-	loc[p]=lc; 
-	fscanf(f1,"%s%s%s%s",label,opcode,operand1,operand2);
-	}//while1
-	printf("\nSYMBOL TABLE\nNAME\t\tLC VALUE\tREL/ABS\n");
-	for(i=0;i<n;i++)
+	if((strcmp(s3,"F")==0)|| (strcmp(s4,"F")==0))
 	{
-	printf("%s\t\t%d\t\t%c\n",s[i].name,s[i].lcval,s[i].ra);
+		lc=lc+4;
 	}
-	printf("\nBASE TABLE\nBASE REGISTER\tBASE VALUE\n");
-	for(i=0;i<ind;i++)
+	if((strcmp(s3,"H")==0)|| (strcmp(s4,"H")==0))
 	{
-	printf("%d\t\t%d\n",b[i].br,b[i].bv);
+		lc=lc+2;
 	}
+	}
+	printf("\nST \n\tsymbol\tlc value\tlength\trelocation\n");
+	for(i=0;i<4;i++)
+	{
+		printf("\t%s\t%d\t\t%d\t%s",s[i].name,s[i].val,s[i].length,s[i].reloc);
+		printf("\n");
+	}
+	printf("\nbase table \n\tbase register\tvalue\n");
+	for(i=0;i<1;i++)
+	{
+		printf("\t%s\t\t%d\n",b[i].reg,b[i].content);
+	}
+
+
+
 	
-	rewind(f1);
-	fscanf(f1,"%s%s%s%s",label,opcode,operand1,operand2);
-	while(!(feof(f1)))
-	{
-	//printf("\n%s\t%s\t%s\t%s\n",label,opcode,operand1,operand2);
-		for(k=0;k<9;k++)
+rewind(fp);
+while(!feof(fp))
 		{
-		flag=0;
-		if(strcmp(opcode,dir[k])==0)
+		fscanf(fp,"%s %s %s %s",s1,s2,s3,s4);
+		for(i=0;i<3;i++)
 			{
-			flag=1; 
-			break;
-			}
-		}
-		for(q=0;q<n;q++)
-		{
-		if(strcmp(s[q].name,operand1)==0)
-			{
-				ch1=s[q].ra;
-				va1=s[q].lcval;
-			}
-		if(strcmp(s[q].name,operand2)==0)
-			{
-				ch2=s[q].ra;
-				va2=s[q].lcval;
-			}
-		}
-		if(flag!=1 && ch1!='A' && ch2!='A')
-		{
-			if(strspn(operand1, "0123456789") == strlen(operand1) && strspn(operand2, "0123456789") == strlen(operand2)) 
-			{
-				printf("\n%s\t%s\t%s\n",opcode,operand1,operand2);
-			}
-			else if(strspn(operand1, "0123456789") == strlen(operand1) && (strcmp(operand2,"?")==0) )
-		 	{
-				printf("\n%s\t%s\n",opcode,operand1);
-			}
-			else if(strspn(operand1, "0123456789") == strlen(operand1) && strspn(operand2, "0123456789") != strlen(operand1))
-			{
-				for(i=0;i<n;i++)
+			if (strcmp(p[i].dir,s2)==0)
 				{
-				if(strcmp(s[i].name,operand2)==0)
+
+				}
+			else if(strcmp(m[i].inst,s2)!=0)
+				{
+				strcpy(pass[l].c,s2);
+				if(atoi(s3)<15)
+					pass[l].n=atoi(s3);
+				for (j=0;j<4;j++)
 					{
-					symval=s[i].lcval;
-					min=9999;
-					for(j=0;j<ind;j++)
-					{
-						if(symval>=b[j].bv)
+					if(strcmp(s4,s[j].name)==0)
 						{
-						diff= symval-b[j].bv;
-						if(diff<min)
-						{
-						min=diff;
-						content = b[j].bv;
-						temp=b[j].br;
+						offset=s[j].val;
+						pass[l].offset=offset-0;
+						pass[l].index=0;
+						pass[l].base=15;
 						}
-						}
-					}
-					offset=symval-content;
-					printf("\n%s\t%s ,\t%d (0, %d)\n",opcode,operand1,offset,temp);
 					}
 				}
 			}
+			l++;
 		}
-		 if(flag!=1 && (ch1=='A' || ch2=='A'))
+	printf("Pass 2\n");
+	i=0;
+	rewind(fp);
+	while(!feof(fp))
 		{
-			if(strspn(operand1, "0123456789") == strlen(operand1))
-				printf("\n%s\t%s,\t%d\n",opcode,operand1,va1);
-			if(ch1=='A' && ch2=='A')
+		fscanf(fp,"%s %s %s %s",s1,s2,s3,s4);
+		if((strcmp(s2,"L")==0)||(strcmp(s2,"A")==0)||(strcmp(s2,"ST")==0))
 			{
-				printf("\n%s\t%d,\t%d\n",opcode,va1,va2);
-			}
+			printf("\t %s %d (%d,%d) \n",pass[i].c,pass[i].offset,pass[i].index,pass[i].base);
+			}	
+		i++;
 		}
-fscanf(f1,"%s%s%s%s",label,opcode,operand1,operand2);
-	}//while2
+
+	return(0);
 }
 
-/* 
-INPUT FILE:
-JOHN START 0 ?
-? USING * 15
-TOTAL EQU 4 ?
-AC EQU 5 ?
-? L 1 FIVE
-? A 1 FOUR
-? ST 1 TEMP
-? USING * 10
-? LR AC TOTAL
-TEMP DS 1 F 
-FOUR DC F '4' 
-FIVE DC F '5' 
+/* output
+MOT 
+	Mnemonics 	length
+	L		4
+	A		4
+	ST		4
+POT 
+	Directives
+	START
+	END
+	USING
+	DC
 
-OUTPUT:
-JOHN	START	0	?		0
+ST 
+	symbol	lc value	length	relocation
+	JOHN	0		1	R
+	FOUR	12		1	R
+	FIVE	14		1	R
+	TEMP	16		4	R
 
-?	USING	*	15		0
-
-TOTAL	EQU	4	?		0
-
-AC	EQU	5	?		0
-
-?	L	1	FIVE		0
-
-?	A	1	FOUR		4
-
-?	ST	1	TEMP		8
-
-?	USING	*	10		12
-
-?	LR	AC	TOTAL		12
-
-TEMP	DS	1	F		12
-
-FOUR	DC	F	'4'		16
-
-FIVE	DC	F	'5'		20
-
-SYMBOL TABLE
-NAME		LC VALUE	REL/ABS
-TOTAL		4		A
-AC		5		A
-TEMP		12		R
-FOUR		16		R
-FIVE		20		R
-
-BASE TABLE
-BASE REGISTER	BASE VALUE
-15		0
-10		12
-
-L	1 ,	8 (0, 10)
-A	1 ,	4 (0, 10)
-ST	1 ,	0 (0, 10)
-LR	5,	4
+base table 
+	base register	value
+	15		0
+Pass 2
+	 L 14 (0,15) 
+	 A 12 (0,15) 
+	 ST 16 (0,15) 
 */
